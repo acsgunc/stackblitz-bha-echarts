@@ -2,41 +2,46 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BHA Diagram - Horizontal with Tooltips</title>
+  <title>BHA Animated & Clickable</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 <body style="margin:0">
-  <div id="bhaHorizontal" style="width: 100%; height: 400px;"></div>
+  <div id="bhaInteractive" style="width: 100%; height: 500px;"></div>
 
   <script>
-    const baseY = 150;
+    const baseY = 180;
     const baseX = 50;
     const height = 60;
     let currentX = baseX;
+    let angle = 0;
 
     const components = [
       {
         name: 'Drillpipe',
         width: 80,
         color: '#A0A0A0',
-        description: 'Drillpipe: Long tubular sections transmitting torque and fluid.'
+        description: 'Transmits torque and fluid.',
+        url: 'https://example.com/drillpipe'
       },
       {
         name: 'Crossover Sub',
         width: 60,
         color: '#8888CC',
-        description: 'Crossover Sub: Connects different tool joints.'
+        description: 'Connects different tool joints.',
+        url: 'https://example.com/crossover'
       },
       {
         name: 'Drill Collar',
         width: 100,
         color: '#FFD700',
-        description: 'Drill Collar: Adds weight on bit and stiffness to avoid deviation.'
+        description: 'Adds weight on bit and stiffness.',
+        url: 'https://example.com/drillcollar'
       },
       {
         name: 'Stabilizer',
         width: 80,
-        description: 'Stabilizer: Centralizes BHA and controls trajectory.',
+        description: 'Centralizes BHA.',
+        url: 'https://example.com/stabilizer',
         render: (x, y, w, h) => ({
           type: 'path',
           shape: {
@@ -56,7 +61,8 @@
       {
         name: 'Reamer',
         width: 80,
-        description: 'Reamer: Enlarges wellbore diameter or conditions it.',
+        description: 'Enlarges/conditions borehole.',
+        url: 'https://example.com/reamer',
         render: (x, y, w, h) => ({
           type: 'path',
           shape: {
@@ -74,79 +80,97 @@
       {
         name: 'Bit',
         width: 90,
-        description: 'Bit: Breaks rock and drills the formation.',
-        render: (x, y, w, h) => ({
-          type: 'group',
-          children: [
-            {
-              type: 'rect',
-              shape: { x, y, width: w, height: h - 10 },
-              style: { fill: '#DC143C', stroke: '#000' }
-            },
-            {
-              type: 'path',
-              shape: {
-                pathData: `
-                  M${x},${y + h - 10}
-                  L${x + w * 0.25},${y + h}
-                  L${x + w * 0.5},${y + h - 5}
-                  L${x + w * 0.75},${y + h}
-                  L${x + w},${y + h - 10}
-                  Z
-                `
-              },
-              style: { fill: '#DC143C', stroke: '#000' }
-            }
-          ]
-        })
+        description: 'Breaks rock, drills formation.',
+        url: 'https://example.com/bit',
+        isBit: true // flag for rotation
       }
     ];
 
-    const renderItems = [];
+    const chart = echarts.init(document.getElementById('bhaInteractive'));
 
-    components.forEach(comp => {
-      const w = comp.width;
-      const x = currentX;
-      const y = baseY;
+    function generateRenderItems(rotation = 0) {
+      currentX = baseX;
+      const renderItems = [];
 
-      const baseShape = comp.render
-        ? comp.render(x, y, w, height)
-        : {
+      for (const comp of components) {
+        const x = currentX;
+        const y = baseY;
+        const w = comp.width;
+
+        let shapeItem;
+        if (comp.isBit) {
+          // Bit with rotation
+          shapeItem = {
+            type: 'group',
+            rotation: (rotation * Math.PI) / 180,
+            origin: [x + w / 2, y + height / 2],
+            children: [
+              {
+                type: 'rect',
+                shape: { x, y, width: w, height: height - 10 },
+                style: { fill: '#DC143C', stroke: '#000' }
+              },
+              {
+                type: 'path',
+                shape: {
+                  pathData: `
+                    M${x},${y + height - 10}
+                    L${x + w * 0.25},${y + height}
+                    L${x + w * 0.5},${y + height - 5}
+                    L${x + w * 0.75},${y + height}
+                    L${x + w},${y + height - 10}
+                    Z
+                  `
+                },
+                style: { fill: '#DC143C', stroke: '#000' }
+              }
+            ]
+          };
+        } else if (comp.render) {
+          shapeItem = comp.render(x, y, w, height);
+        } else {
+          shapeItem = {
             type: 'rect',
             shape: { x, y, width: w, height: height },
             style: { fill: comp.color || '#ccc', stroke: '#000' }
           };
+        }
 
-      renderItems.push({
-        type: 'group',
-        children: [
-          {
-            ...baseShape,
-            info: { name: comp.name, description: comp.description }
-          },
-          {
-            type: 'text',
-            style: {
-              text: comp.name,
-              x: x + w / 2,
-              y: y + height / 2,
-              textAlign: 'center',
-              textVerticalAlign: 'middle',
-              font: 'bold 13px sans-serif',
-              fill: '#000'
+        renderItems.push({
+          type: 'group',
+          children: [
+            {
+              ...shapeItem,
+              info: {
+                name: comp.name,
+                description: comp.description,
+                url: comp.url
+              }
+            },
+            {
+              type: 'text',
+              style: {
+                text: comp.name,
+                x: x + w / 2,
+                y: y + height / 2,
+                textAlign: 'center',
+                textVerticalAlign: 'middle',
+                font: 'bold 13px sans-serif',
+                fill: '#000'
+              }
             }
-          }
-        ]
-      });
+          ]
+        });
 
-      currentX += w + 20;
-    });
+        currentX += w + 20;
+      }
 
-    const chart = echarts.init(document.getElementById('bhaHorizontal'));
+      return renderItems;
+    }
 
     chart.setOption({
       title: {
-        text: 'Bottom Hole Assembly (BHA) – Horizontal Layout',
+        text: 'Bottom Hole Assembly (Animated + Clickable)',
         left: 'center'
       },
       tooltip: {
@@ -156,24 +180,59 @@
           return info ? `<b>${info.name}</b><br/>${info.description}` : '';
         }
       },
-      xAxis: { show: false, min: 0, max: currentX + 50 },
-      yAxis: { show: false, min: 0, max: 400 },
+      xAxis: { show: false, min: 0, max: 1000 },
+      yAxis: { show: false, min: 0, max: 500 },
       series: [{
         type: 'custom',
         renderItem: function (params, api) {
           return {
             type: 'group',
-            children: renderItems.map(item => {
-              const withData = { ...item.children[0], info: item.children[0].info };
-              return {
-                ...item,
-                children: [withData, item.children[1]]
-              };
-            })
+            children: generateRenderItems(angle)
           };
         },
-        data: renderItems
+        data: generateRenderItems()
       }]
+    });
+
+    // 🔁 Bit Rotation Animation
+    setInterval(() => {
+      angle = (angle + 5) % 360;
+      chart.setOption({
+        series: [{
+          type: 'custom',
+          renderItem: function (params, api) {
+            return {
+              type: 'group',
+              children: generateRenderItems(angle)
+            };
+          },
+          data: generateRenderItems()
+        }]
+      });
+    }, 100);
+
+    // 🧠 Clickable Parts
+    chart.getZr().on('click', function (event) {
+      const pointInPixel = [event.offsetX, event.offsetY];
+      const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
+
+      const data = generateRenderItems(angle);
+      for (const item of data) {
+        const info = item.children[0]?.info;
+        if (info && info.url) {
+          const shape = item.children[0].shape;
+          // Rough hit area (for simplification)
+          if (
+            event.offsetX >= shape.x &&
+            event.offsetX <= shape.x + shape.width &&
+            event.offsetY >= shape.y &&
+            event.offsetY <= shape.y + shape.height
+          ) {
+            window.open(info.url, '_blank');
+            break;
+          }
+        }
+      }
     });
   </script>
 </body>
