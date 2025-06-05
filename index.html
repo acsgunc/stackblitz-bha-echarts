@@ -2,66 +2,149 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Realistic BHA Diagram</title>
+  <title>Enhanced BHA Diagram</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 <body style="margin:0">
-  <div id="bhaDiagram" style="width:100%; height:700px;"></div>
+  <div id="bhaEnhanced" style="width:100%; height:800px;"></div>
 
   <script>
-    const components = [
-      { name: 'Drillpipe', height: 40, color: '#A0A0A0' },
-      { name: 'Crossover Sub', height: 30, color: '#8888CC' },
-      { name: 'Drill Collar', height: 60, color: '#FFD700' },
-      { name: 'Stabilizer', height: 50, color: '#32CD32' },
-      { name: 'Reamer', height: 40, color: '#FF8C00' },
-      { name: 'Bit', height: 50, color: '#DC143C' }
-    ];
-
-    const baseY = 50;
     const baseX = 200;
     const width = 100;
+    let currentY = 50;
 
-    const renderItems = [];
-    let currentY = baseY;
+    // Define each BHA component with shape data
+    const components = [
+      {
+        name: 'Drillpipe',
+        height: 40,
+        render: (x, y, w, h) => ({
+          type: 'rect',
+          shape: { x, y, width: w, height: h },
+          style: { fill: '#A0A0A0', stroke: '#000' }
+        })
+      },
+      {
+        name: 'Crossover Sub',
+        height: 30,
+        render: (x, y, w, h) => ({
+          type: 'rect',
+          shape: { x, y, width: w, height: h },
+          style: { fill: '#8888CC', stroke: '#000' }
+        })
+      },
+      {
+        name: 'Drill Collar',
+        height: 60,
+        render: (x, y, w, h) => ({
+          type: 'rect',
+          shape: { x: x + 10, y, width: w - 20, height: h },
+          style: { fill: '#FFD700', stroke: '#000' }
+        })
+      },
+      {
+        name: 'Stabilizer',
+        height: 60,
+        render: (x, y, w, h) => ({
+          type: 'path',
+          shape: {
+            pathData: `
+              M${x + w/2 - 15},${y}
+              L${x + w/2 + 15},${y}
+              L${x + w},${y + h/2}
+              L${x + w/2 + 15},${y + h}
+              L${x + w/2 - 15},${y + h}
+              L${x},${y + h/2}
+              Z
+            `,
+            x: 0,
+            y: 0,
+            width: w,
+            height: h
+          },
+          style: { fill: '#32CD32', stroke: '#000' }
+        })
+      },
+      {
+        name: 'Reamer',
+        height: 50,
+        render: (x, y, w, h) => ({
+          type: 'path',
+          shape: {
+            pathData: `
+              M${x},${y + h}
+              L${x + w/4},${y}
+              L${x + 3*w/4},${y}
+              L${x + w},${y + h}
+              Z
+            `,
+            x: 0,
+            y: 0
+          },
+          style: { fill: '#FF8C00', stroke: '#000' }
+        })
+      },
+      {
+        name: 'Bit',
+        height: 50,
+        render: (x, y, w, h) => ({
+          type: 'group',
+          children: [
+            {
+              type: 'rect',
+              shape: { x, y, width: w, height: h - 10 },
+              style: { fill: '#DC143C', stroke: '#000' }
+            },
+            {
+              type: 'path',
+              shape: {
+                pathData: `
+                  M${x},${y + h - 10}
+                  L${x + w * 0.25},${y + h}
+                  L${x + w * 0.5},${y + h - 5}
+                  L${x + w * 0.75},${y + h}
+                  L${x + w},${y + h - 10}
+                  Z
+                `,
+                x: 0,
+                y: 0
+              },
+              style: { fill: '#DC143C', stroke: '#000' }
+            }
+          ]
+        })
+      }
+    ];
 
-    components.forEach(component => {
-      renderItems.push({
-        type: 'rect',
-        shape: {
-          x: baseX,
-          y: currentY,
-          width: width,
-          height: component.height
-        },
-        style: {
-          fill: component.color,
-          stroke: '#000',
-          lineWidth: 1
-        },
-        textContent: {
-          style: {
-            text: component.name,
-            fill: '#000',
-            font: 'bold 14px sans-serif',
-            x: baseX + width / 2,
-            y: currentY + component.height / 2,
-            textAlign: 'center',
-            textVerticalAlign: 'middle'
+    const shapes = [];
+
+    for (const comp of components) {
+      shapes.push({
+        type: 'group',
+        children: [
+          comp.render(baseX, currentY, width, comp.height),
+          {
+            type: 'text',
+            style: {
+              text: comp.name,
+              x: baseX + width / 2,
+              y: currentY + comp.height / 2,
+              textAlign: 'center',
+              textVerticalAlign: 'middle',
+              font: 'bold 14px sans-serif',
+              fill: '#000'
+            }
           }
-        },
-        textConfig: {
-          position: 'inside'
-        }
+        ]
       });
-      currentY += component.height + 10;
-    });
+      currentY += comp.height + 10;
+    }
 
-    const chart = echarts.init(document.getElementById('bhaDiagram'));
+    const chart = echarts.init(document.getElementById('bhaEnhanced'));
 
     chart.setOption({
       title: {
-        text: 'Bottom Hole Assembly (BHA) Diagram',
+        text: 'Enhanced Bottom Hole Assembly (BHA) Diagram',
         left: 'center'
       },
       xAxis: { show: false, min: 0, max: 500 },
@@ -69,7 +152,7 @@
       series: [{
         type: 'custom',
         renderItem: function () {
-          return { type: 'group', children: renderItems };
+          return { type: 'group', children: shapes };
         },
         data: [0]
       }]
