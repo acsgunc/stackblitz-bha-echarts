@@ -1,63 +1,79 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Bottom Hole Assembly Visualization</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-  </head>
-  <body style="margin: 0">
-    <div id="bhaChart" style="width: 100%; height: 600px"></div>
+<head>
+  <meta charset="utf-8">
+  <title>Realistic BHA Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body style="margin:0">
+  <div id="bhaDiagram" style="width:100%; height:700px;"></div>
 
-    <script>
-      const bhaComponents = [
-        { name: 'Drillpipe', value: 1 },
-        { name: 'Sub', value: 1 },
-        { name: 'Drill Collar', value: 1.5 },
-        { name: 'Stabilizer', value: 1 },
-        { name: 'Reamer', value: 1 },
-        { name: 'Bit', value: 1.2 },
-      ];
+  <script>
+    const components = [
+      { name: 'Drillpipe', height: 40, color: '#A0A0A0' },
+      { name: 'Crossover Sub', height: 30, color: '#8888CC' },
+      { name: 'Drill Collar', height: 60, color: '#FFD700' },
+      { name: 'Stabilizer', height: 50, color: '#32CD32' },
+      { name: 'Reamer', height: 40, color: '#FF8C00' },
+      { name: 'Bit', height: 50, color: '#DC143C' }
+    ];
 
-      const chart = echarts.init(document.getElementById('bhaChart'));
+    const baseY = 50;
+    const baseX = 200;
+    const width = 100;
 
-      chart.setOption({
-        title: {
-          text: 'Bottom Hole Assembly (BHA)',
-          left: 'center',
+    const renderItems = [];
+    let currentY = baseY;
+
+    components.forEach(component => {
+      renderItems.push({
+        type: 'rect',
+        shape: {
+          x: baseX,
+          y: currentY,
+          width: width,
+          height: component.height
         },
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}: {c}',
+        style: {
+          fill: component.color,
+          stroke: '#000',
+          lineWidth: 1
         },
-        xAxis: {
-          type: 'value',
-          show: false,
+        textContent: {
+          style: {
+            text: component.name,
+            fill: '#000',
+            font: 'bold 14px sans-serif',
+            x: baseX + width / 2,
+            y: currentY + component.height / 2,
+            textAlign: 'center',
+            textVerticalAlign: 'middle'
+          }
         },
-        yAxis: {
-          type: 'category',
-          data: bhaComponents.map((c) => c.name),
-          inverse: true,
-          axisLabel: {
-            fontWeight: 'bold',
-          },
-        },
-        series: [
-          {
-            type: 'bar',
-            data: bhaComponents.map((c) => c.value),
-            label: {
-              show: true,
-              position: 'inside',
-              formatter: ({ dataIndex }) => bhaComponents[dataIndex].name,
-            },
-            itemStyle: {
-              color: '#4A90E2',
-              borderRadius: [5, 5, 5, 5],
-            },
-            barWidth: 40,
-          },
-        ],
+        textConfig: {
+          position: 'inside'
+        }
       });
-    </script>
-  </body>
+      currentY += component.height + 10;
+    });
+
+    const chart = echarts.init(document.getElementById('bhaDiagram'));
+
+    chart.setOption({
+      title: {
+        text: 'Bottom Hole Assembly (BHA) Diagram',
+        left: 'center'
+      },
+      xAxis: { show: false, min: 0, max: 500 },
+      yAxis: { show: false, min: 0, max: currentY + 50 },
+      series: [{
+        type: 'custom',
+        renderItem: function () {
+          return { type: 'group', children: renderItems };
+        },
+        data: [0]
+      }]
+    });
+  </script>
+</body>
 </html>
