@@ -2,49 +2,41 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Enhanced BHA Diagram</title>
+  <title>BHA Diagram - Horizontal with Tooltips</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 <body style="margin:0">
-  <div id="bhaEnhanced" style="width:100%; height:800px;"></div>
+  <div id="bhaHorizontal" style="width: 100%; height: 400px;"></div>
 
   <script>
-    const baseX = 200;
-    const width = 100;
-    let currentY = 50;
+    const baseY = 150;
+    const baseX = 50;
+    const height = 60;
+    let currentX = baseX;
 
-    // Define each BHA component with shape data
     const components = [
       {
         name: 'Drillpipe',
-        height: 40,
-        render: (x, y, w, h) => ({
-          type: 'rect',
-          shape: { x, y, width: w, height: h },
-          style: { fill: '#A0A0A0', stroke: '#000' }
-        })
+        width: 80,
+        color: '#A0A0A0',
+        description: 'Drillpipe: Long tubular sections transmitting torque and fluid.'
       },
       {
         name: 'Crossover Sub',
-        height: 30,
-        render: (x, y, w, h) => ({
-          type: 'rect',
-          shape: { x, y, width: w, height: h },
-          style: { fill: '#8888CC', stroke: '#000' }
-        })
+        width: 60,
+        color: '#8888CC',
+        description: 'Crossover Sub: Connects different tool joints.'
       },
       {
         name: 'Drill Collar',
-        height: 60,
-        render: (x, y, w, h) => ({
-          type: 'rect',
-          shape: { x: x + 10, y, width: w - 20, height: h },
-          style: { fill: '#FFD700', stroke: '#000' }
-        })
+        width: 100,
+        color: '#FFD700',
+        description: 'Drill Collar: Adds weight on bit and stiffness to avoid deviation.'
       },
       {
         name: 'Stabilizer',
-        height: 60,
+        width: 80,
+        description: 'Stabilizer: Centralizes BHA and controls trajectory.',
         render: (x, y, w, h) => ({
           type: 'path',
           shape: {
@@ -56,18 +48,15 @@
               L${x + w/2 - 15},${y + h}
               L${x},${y + h/2}
               Z
-            `,
-            x: 0,
-            y: 0,
-            width: w,
-            height: h
+            `
           },
           style: { fill: '#32CD32', stroke: '#000' }
         })
       },
       {
         name: 'Reamer',
-        height: 50,
+        width: 80,
+        description: 'Reamer: Enlarges wellbore diameter or conditions it.',
         render: (x, y, w, h) => ({
           type: 'path',
           shape: {
@@ -77,16 +66,15 @@
               L${x + 3*w/4},${y}
               L${x + w},${y + h}
               Z
-            `,
-            x: 0,
-            y: 0
+            `
           },
           style: { fill: '#FF8C00', stroke: '#000' }
         })
       },
       {
         name: 'Bit',
-        height: 50,
+        width: 90,
+        description: 'Bit: Breaks rock and drills the formation.',
         render: (x, y, w, h) => ({
           type: 'group',
           children: [
@@ -105,9 +93,7 @@
                   L${x + w * 0.75},${y + h}
                   L${x + w},${y + h - 10}
                   Z
-                `,
-                x: 0,
-                y: 0
+                `
               },
               style: { fill: '#DC143C', stroke: '#000' }
             }
@@ -116,45 +102,77 @@
       }
     ];
 
-    const shapes = [];
+    const renderItems = [];
 
-    for (const comp of components) {
-      shapes.push({
+    components.forEach(comp => {
+      const w = comp.width;
+      const x = currentX;
+      const y = baseY;
+
+      const baseShape = comp.render
+        ? comp.render(x, y, w, height)
+        : {
+            type: 'rect',
+            shape: { x, y, width: w, height: height },
+            style: { fill: comp.color || '#ccc', stroke: '#000' }
+          };
+
+      renderItems.push({
         type: 'group',
         children: [
-          comp.render(baseX, currentY, width, comp.height),
+          {
+            ...baseShape,
+            info: { name: comp.name, description: comp.description }
+          },
           {
             type: 'text',
             style: {
               text: comp.name,
-              x: baseX + width / 2,
-              y: currentY + comp.height / 2,
+              x: x + w / 2,
+              y: y + height / 2,
               textAlign: 'center',
               textVerticalAlign: 'middle',
-              font: 'bold 14px sans-serif',
+              font: 'bold 13px sans-serif',
               fill: '#000'
             }
           }
         ]
       });
-      currentY += comp.height + 10;
-    }
 
-    const chart = echarts.init(document.getElementById('bhaEnhanced'));
+      currentX += w + 20;
+    });
+
+    const chart = echarts.init(document.getElementById('bhaHorizontal'));
 
     chart.setOption({
       title: {
-        text: 'Enhanced Bottom Hole Assembly (BHA) Diagram',
+        text: 'Bottom Hole Assembly (BHA) – Horizontal Layout',
         left: 'center'
       },
-      xAxis: { show: false, min: 0, max: 500 },
-      yAxis: { show: false, min: 0, max: currentY + 50 },
+      tooltip: {
+        trigger: 'item',
+        formatter: function (params) {
+          const info = params?.data?.info;
+          return info ? `<b>${info.name}</b><br/>${info.description}` : '';
+        }
+      },
+      xAxis: { show: false, min: 0, max: currentX + 50 },
+      yAxis: { show: false, min: 0, max: 400 },
       series: [{
         type: 'custom',
-        renderItem: function () {
-          return { type: 'group', children: shapes };
+        renderItem: function (params, api) {
+          return {
+            type: 'group',
+            children: renderItems.map(item => {
+              const withData = { ...item.children[0], info: item.children[0].info };
+              return {
+                ...item,
+                children: [withData, item.children[1]]
+              };
+            })
+          };
         },
-        data: [0]
+        data: renderItems
       }]
     });
   </script>
