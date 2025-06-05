@@ -2,145 +2,118 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BHA Animated & Clickable</title>
+  <title>BHA with Real Depth Axis</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 <body style="margin:0">
-  <div id="bhaInteractive" style="width: 100%; height: 500px;"></div>
+  <div id="bhaDepthFix" style="width: 100%; height: 500px;"></div>
 
   <script>
-    const baseY = 180;
-    const baseX = 50;
-    const height = 60;
-    let currentX = baseX;
+    const chart = echarts.init(document.getElementById('bhaDepthFix'));
     let angle = 0;
 
     const components = [
       {
         name: 'Drillpipe',
-        width: 80,
+        width: 200,
         color: '#A0A0A0',
         description: 'Transmits torque and fluid.',
-        url: 'https://example.com/drillpipe'
+        url: 'https://example.com/drillpipe',
+        depth: 0
       },
       {
         name: 'Crossover Sub',
-        width: 60,
+        width: 120,
         color: '#8888CC',
         description: 'Connects different tool joints.',
-        url: 'https://example.com/crossover'
+        url: 'https://example.com/crossover',
+        depth: 1000
       },
       {
         name: 'Drill Collar',
-        width: 100,
+        width: 200,
         color: '#FFD700',
         description: 'Adds weight on bit and stiffness.',
-        url: 'https://example.com/drillcollar'
+        url: 'https://example.com/drillcollar',
+        depth: 3000
       },
       {
         name: 'Stabilizer',
-        width: 80,
+        width: 160,
+        color: '#32CD32',
         description: 'Centralizes BHA.',
         url: 'https://example.com/stabilizer',
-        render: (x, y, w, h) => ({
-          type: 'path',
-          shape: {
-            pathData: `
-              M${x + w/2 - 15},${y}
-              L${x + w/2 + 15},${y}
-              L${x + w},${y + h/2}
-              L${x + w/2 + 15},${y + h}
-              L${x + w/2 - 15},${y + h}
-              L${x},${y + h/2}
-              Z
-            `
-          },
-          style: { fill: '#32CD32', stroke: '#000' }
-        })
+        depth: 4000
       },
       {
         name: 'Reamer',
-        width: 80,
+        width: 160,
+        color: '#FF8C00',
         description: 'Enlarges/conditions borehole.',
         url: 'https://example.com/reamer',
-        render: (x, y, w, h) => ({
-          type: 'path',
-          shape: {
-            pathData: `
-              M${x},${y + h}
-              L${x + w/4},${y}
-              L${x + 3*w/4},${y}
-              L${x + w},${y + h}
-              Z
-            `
-          },
-          style: { fill: '#FF8C00', stroke: '#000' }
-        })
+        depth: 5000
       },
       {
         name: 'Bit',
-        width: 90,
+        width: 180,
+        color: '#DC143C',
         description: 'Breaks rock, drills formation.',
         url: 'https://example.com/bit',
-        isBit: true // flag for rotation
+        depth: 6000,
+        isBit: true
       }
     ];
 
-    const chart = echarts.init(document.getElementById('bhaInteractive'));
+    function getRenderItem(rotationAngle) {
+      return function (params, api) {
+        const y = 180;
+        const height = 60;
+        const group = { type: 'group', children: [] };
 
-    function generateRenderItems(rotation = 0) {
-      currentX = baseX;
-      const renderItems = [];
+        for (const comp of components) {
+          const coord = api.coord([comp.depth, 0]); // get canvas X from depth
+          const x = coord[0];
+          const w = comp.width;
 
-      for (const comp of components) {
-        const x = currentX;
-        const y = baseY;
-        const w = comp.width;
-
-        let shapeItem;
-        if (comp.isBit) {
-          // Bit with rotation
-          shapeItem = {
-            type: 'group',
-            rotation: (rotation * Math.PI) / 180,
-            origin: [x + w / 2, y + height / 2],
-            children: [
-              {
-                type: 'rect',
-                shape: { x, y, width: w, height: height - 10 },
-                style: { fill: '#DC143C', stroke: '#000' }
-              },
-              {
-                type: 'path',
-                shape: {
-                  pathData: `
-                    M${x},${y + height - 10}
-                    L${x + w * 0.25},${y + height}
-                    L${x + w * 0.5},${y + height - 5}
-                    L${x + w * 0.75},${y + height}
-                    L${x + w},${y + height - 10}
-                    Z
-                  `
+          let shape;
+          if (comp.isBit) {
+            shape = {
+              type: 'group',
+              rotation: (rotationAngle * Math.PI) / 180,
+              origin: [x + w / 2, y + height / 2],
+              children: [
+                {
+                  type: 'rect',
+                  shape: { x, y, width: w, height: height - 10 },
+                  style: { fill: comp.color, stroke: '#000' }
                 },
-                style: { fill: '#DC143C', stroke: '#000' }
-              }
-            ]
-          };
-        } else if (comp.render) {
-          shapeItem = comp.render(x, y, w, height);
-        } else {
-          shapeItem = {
-            type: 'rect',
-            shape: { x, y, width: w, height: height },
-            style: { fill: comp.color || '#ccc', stroke: '#000' }
-          };
-        }
+                {
+                  type: 'path',
+                  shape: {
+                    pathData: `
+                      M${x},${y + height - 10}
+                      L${x + w * 0.25},${y + height}
+                      L${x + w * 0.5},${y + height - 5}
+                      L${x + w * 0.75},${y + height}
+                      L${x + w},${y + height - 10}
+                      Z
+                    `
+                  },
+                  style: { fill: comp.color, stroke: '#000' }
+                }
+              ]
+            };
+          } else {
+            shape = {
+              type: 'rect',
+              shape: { x, y, width: w, height: height },
+              style: { fill: comp.color, stroke: '#000' }
+            };
+          }
 
-        renderItems.push({
-          type: 'group',
-          children: [
+          group.children.push(
             {
-              ...shapeItem,
+              ...shape,
               info: {
                 name: comp.name,
                 description: comp.description,
@@ -155,22 +128,20 @@
                 y: y + height / 2,
                 textAlign: 'center',
                 textVerticalAlign: 'middle',
-                font: 'bold 13px sans-serif',
+                font: 'bold 12px sans-serif',
                 fill: '#000'
               }
             }
-          ]
-        });
+          );
+        }
 
-        currentX += w + 20;
-      }
-
-      return renderItems;
+        return group;
+      };
     }
 
-    chart.setOption({
+    const option = {
       title: {
-        text: 'Bottom Hole Assembly (Animated + Clickable)',
+        text: 'BHA with Depth Axis (Interactive + Animated)',
         left: 'center'
       },
       tooltip: {
@@ -180,58 +151,58 @@
           return info ? `<b>${info.name}</b><br/>${info.description}` : '';
         }
       },
-      xAxis: { show: false, min: 0, max: 1000 },
-      yAxis: { show: false, min: 0, max: 500 },
-      series: [{
-        type: 'custom',
-        renderItem: function (params, api) {
-          return {
-            type: 'group',
-            children: generateRenderItems(angle)
-          };
-        },
-        data: generateRenderItems()
-      }]
-    });
+      xAxis: {
+        name: 'Depth (ft)',
+        type: 'value',
+        min: 0,
+        max: 7000,
+        axisLine: { show: true },
+        splitLine: { show: true }
+      },
+      yAxis: {
+        show: false,
+        type: 'value',
+        min: 0,
+        max: 500
+      },
+      series: [
+        {
+          type: 'custom',
+          coordinateSystem: 'cartesian2d',
+          renderItem: getRenderItem(angle),
+          data: components
+        }
+      ]
+    };
 
-    // 🔁 Bit Rotation Animation
+    chart.setOption(option);
+
+    // Animate bit rotation
     setInterval(() => {
       angle = (angle + 5) % 360;
       chart.setOption({
-        series: [{
-          type: 'custom',
-          renderItem: function (params, api) {
-            return {
-              type: 'group',
-              children: generateRenderItems(angle)
-            };
-          },
-          data: generateRenderItems()
-        }]
+        series: [
+          {
+            type: 'custom',
+            coordinateSystem: 'cartesian2d',
+            renderItem: getRenderItem(angle),
+            data: components
+          }
+        ]
       });
     }, 100);
 
-    // 🧠 Clickable Parts
+    // Clickable shapes
     chart.getZr().on('click', function (event) {
       const pointInPixel = [event.offsetX, event.offsetY];
       const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
+      const xClicked = pointInGrid[0];
 
-      const data = generateRenderItems(angle);
-      for (const item of data) {
-        const info = item.children[0]?.info;
-        if (info && info.url) {
-          const shape = item.children[0].shape;
-          // Rough hit area (for simplification)
-          if (
-            event.offsetX >= shape.x &&
-            event.offsetX <= shape.x + shape.width &&
-            event.offsetY >= shape.y &&
-            event.offsetY <= shape.y + shape.height
-          ) {
-            window.open(info.url, '_blank');
-            break;
-          }
-        }
+      const closest = components.find(c =>
+        Math.abs(c.depth - xClicked) < 200
+      );
+      if (closest?.url) {
+        window.open(closest.url, '_blank');
       }
     });
   </script>
