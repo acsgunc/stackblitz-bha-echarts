@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BHA Optimization Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background-color: #f9f9f9;
+      }
+      #bhaChart {
+        width: 100%;
+        max-width: 800px;
+        height: 500px;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+
+  <nav>
+  <a href="/" aria-current="page">Home</a>
+  <a href="/page2.html">Other page</a>
+</nav>
+<main>
+  <h1>Home page</h1>
+</main>
+    <h2 style="text-align: center">
+      Black Hole Algorithm (BHA) Optimization Convergence
+    </h2>
+    <div id="bhaChart"></div>
+
+    <script>
+      var chartDom = document.getElementById('bhaChart');
+      var myChart = echarts.init(chartDom);
+      var option;
+
+      option = {
+        title: {
+          text: 'BHA Optimization Convergence',
+          left: 'center',
+        },
+        tooltip: {
+          trigger: 'axis',
+        },
+        xAxis: {
+          type: 'category',
+          name: 'Iteration',
+          data: Array.from({ length: 100 }, (_, i) => i + 1),
+        },
+        yAxis: {
+          type: 'value',
+          name: 'Fitness Value',
+        },
+        series: [
+          {
+            data: [
+              90.48, 81.87, 74.08, 67.03, 60.65, 54.88, 49.66, 44.93, 40.66,
+              36.79, 33.29, 30.12, 27.25, 24.66, 22.31, 20.19, 18.27, 16.53,
+              14.96, 13.53, 12.25, 11.08, 10.03, 9.07, 8.21, 7.43, 6.72, 6.08,
+              5.5, 4.98, 4.5, 4.08, 3.69, 3.34, 3.02, 2.73, 2.47, 2.24, 2.02,
+              1.83, 1.66, 1.5, 1.36, 1.23, 1.11, 1.01, 0.91, 0.82, 0.74, 0.67,
+              0.61, 0.55, 0.5, 0.45, 0.41, 0.37, 0.33, 0.3, 0.27, 0.25, 0.22,
+              0.2, 0.18, 0.17, 0.15, 0.14, 0.12, 0.11, 0.1, 0.09, 0.08, 0.07,
+              0.07, 0.06, 0.06, 0.05, 0.05, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03,
+              0.03, 0.02, 0.02, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01,
+              0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+            ],
+            type: 'line',
+            smooth: true,
+            name: 'Fitness',
+            lineStyle: {
+              color: '#5470C6',
+              width: 3,
+            },
+            itemStyle: {
+              color: '#5470C6',
+            },
+          },
+        ],
+      };
+
+      option && myChart.setOption(option);
+    </script>
+  </body>
+</html>
